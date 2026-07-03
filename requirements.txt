@@ -1,0 +1,15 @@
+streamlit
+langchain
+langchain-google-genai
+langchain-groq
+langchain-ollama
+langgraph
+anthropic
+google-generativeai
+groq
+pdfplumber
+python-docx
+httpx
+beautifulsoup4
+python-dotenv
+firecrawl-py

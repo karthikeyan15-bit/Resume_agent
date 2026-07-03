@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Builder — Tech Stack</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f8f7f4; color: #1a1a1a; min-height: 100vh;
+  padding: 40px 24px;
+}
+.page-wrap { max-width: 860px; margin: 0 auto; }
+.page-title { font-size: 22px; font-weight: 500; text-align: center; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 36px; }
+
+/* ── Layer ── */
+.layer { margin-bottom: 8px; }
+.layer-label {
+  font-size: 11px; font-weight: 500; color: #aaa;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  text-align: center; margin-bottom: 8px; margin-top: 20px;
+}
+.layer-label:first-of-type { margin-top: 0; }
+.row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ── Node ── */
+.node {
+  border-radius: 10px; padding: 12px 20px;
+  font-size: 13px; font-weight: 500;
+  text-align: center; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid transparent;
+  flex: 1; min-width: 160px; max-width: 280px;
+  position: relative;
+}
+.node:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.10); }
+.node small {
+  display: block; font-size: 11px; font-weight: 400;
+  margin-top: 3px; opacity: 0.72; line-height: 1.4;
+}
+.node-full { max-width: 100%; width: 100%; }
+
+/* Colors */
+.n-purple { background: #eeedfe; border-color: #afa9ec; color: #26215c; }
+.n-coral  { background: #faece7; border-color: #f0997b; color: #4a1b0c; }
+.n-teal   { background: #e1f5ee; border-color: #5dcaa5; color: #04342c; }
+.n-amber  { background: #faeeda; border-color: #ef9f27; color: #412402; }
+.n-gray   { background: #f1efe8; border-color: #d3d1c7; color: #2c2c2a; }
+.n-green  { background: #eaf3de; border-color: #97c459; color: #173404; }
+
+/* ── Arrow ── */
+.arrow-wrap {
+  display: flex; justify-content: center;
+  align-items: center; height: 32px;
+}
+.arrow-col { display: flex; flex-direction: column; align-items: center; }
+.arrow-line { width: 1.5px; height: 16px; background: #c9c7be; }
+.arrow-head {
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #c9c7be;
+}
+
+/* ── Tooltip ── */
+.tooltip-wrap { position: relative; flex: 1; min-width: 160px; max-width: 280px; }
+.tooltip-wrap.full { flex: none; width: 100%; max-width: 100%; }
+.tooltip {
+  display: none;
+  background: #1a1a1a; color: #fff;
+  font-size: 11px; border-radius: 6px;
+  padding: 6px 10px; white-space: nowrap;
+  position: absolute; top: calc(100% + 6px);
+  left: 50%; transform: translateX(-50%);
+  z-index: 10; pointer-events: none;
+  max-width: 260px; white-space: normal;
+  text-align: center; line-height: 1.5;
+}
+.tooltip-wrap:hover .tooltip { display: block; }
+
+/* ── Tag badge on node ── */
+.pkg-badge {
+  display: inline-block;
+  font-size: 10px; font-family: monospace;
+  padding: 1px 6px; border-radius: 4px;
+  margin-bottom: 4px; font-weight: 600;
+}
+.badge-purple { background: #534ab7; color: #eeedfe; }
+.badge-coral  { background: #993c1d; color: #faece7; }
+.badge-teal   { background: #0f6e56; color: #e1f5ee; }
+.badge-amber  { background: #854f0b; color: #faeeda; }
+.badge-gray   { background: #5f5e5a; color: #f1efe8; }
+
+/* ── pip command box ── */
+.pip-box {
+  border: 1px dashed #c9c7be; border-radius: 10px;
+  padding: 14px 20px; text-align: center;
+  font-size: 13px; font-family: monospace;
+  color: #5f5e5a; margin: 20px 0;
+  background: #fff;
+}
+.pip-box strong { color: #4f46e5; }
+
+/* ── Divider ── */
+hr { border: none; border-top: 1px solid #e5e3db; margin: 24px 0; }
+
+/* ── Legend ── */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  justify-content: center; margin-top: 16px;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Table section ── */
+.table-wrap { margin-top: 32px; }
+.table-title { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e5e3db; }
+th { background: #f8f7f4; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; padding: 10px 14px; text-align: left; border-bottom: 1px solid #e5e3db; }
+td { padding: 10px 14px; border-bottom: 1px solid #f1efe8; color: #444; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-family: monospace; font-size: 12px; color: #4f46e5; font-weight: 500; white-space: nowrap; }
+td .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.free-badge { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
+.paid-badge { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
+.opt-badge  { background: #f1efe8; color: #5f5e5a; border: 1px solid #d3d1c7; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
+
+.footer { margin-top: 32px; text-align: center; font-size: 11px; color: #bbb; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<div class="page-title">Resume Builder — Tech Stack</div>
+<div class="page-sub">Every tool, framework, and LLM used in the 4-agent pipeline</div>
+
+<!-- ══════════════════════════════ -->
+<!-- FRONTEND -->
+<!-- ══════════════════════════════ -->
+<div class="layer-label">Frontend</div>
+<div class="row">
+  <div class="tooltip-wrap full">
+    <div class="node n-purple node-full">
+      <span class="pkg-badge badge-purple">streamlit</span><br/>
+      Streamlit
+      <small>Web UI · 5 tabs · file uploader · st.download_button · st.status()</small>
+    </div>
+    <div class="tooltip">Run with: streamlit run app1.py — opens at localhost:8501</div>
+  </div>
+</div>
+
+<div class="arrow-wrap"><div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div></div>
+
+<!-- ══════════════════════════════ -->
+<!-- ORCHESTRATION -->
+<!-- ══════════════════════════════ -->
+<div class="layer-label">Agent orchestration</div>
+<div class="row">
+  <div class="tooltip-wrap">
+    <div class="node n-purple">
+      <span class="pkg-badge badge-purple">langgraph</span><br/>
+      LangGraph
+      <small>StateGraph · sequential pipeline · ResumeState TypedDict</small>
+    </div>
+    <div class="tooltip">Wires all 4 agents with add_node() and add_edge() — compiles into one callable pipeline</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-purple">
+      <span class="pkg-badge badge-purple">langchain</span><br/>
+      LangChain
+      <small>LCEL chains · PromptTemplate · StrOutputParser</small>
+    </div>
+    <div class="tooltip">The pipe operator | connects prompt → LLM → parser inside every agent</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-purple">
+      <span class="pkg-badge badge-purple">langchain-groq</span><br/>
+      langchain-groq
+      <small>LangChain ↔ Groq bridge · ChatGroq class</small>
+    </div>
+    <div class="tooltip">Adapter that makes Groq work with LangChain's standard interface</div>
+  </div>
+</div>
+
+<div class="arrow-wrap"><div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div></div>
+
+<!-- ══════════════════════════════ -->
+<!-- LLM -->
+<!-- ══════════════════════════════ -->
+<div class="layer-label">LLM providers — swap via llm_config.py</div>
+<div class="row">
+  <div class="tooltip-wrap">
+    <div class="node n-coral">
+      <span class="pkg-badge badge-coral">groq</span><br/>
+      Groq — Primary
+      <small>Llama 3.1 · free · no credit card · fastest inference</small>
+    </div>
+    <div class="tooltip">DEFAULT_PROVIDER = "groq" in llm_config.py — used in this workshop</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-coral">
+      <span class="pkg-badge badge-coral">google-generativeai</span><br/>
+      Gemini — Alt
+      <small>gemini-2.0-flash · free tier · Google account</small>
+    </div>
+    <div class="tooltip">Change DEFAULT_PROVIDER = "gemini" — get key at aistudio.google.com</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-coral">
+      <span class="pkg-badge badge-coral">langchain-ollama</span><br/>
+      Ollama — Alt
+      <small>Runs locally · no API key · llama3.1 / mistral</small>
+    </div>
+    <div class="tooltip">Change DEFAULT_PROVIDER = "ollama" — needs Ollama installed locally</div>
+  </div>
+</div>
+
+<div class="arrow-wrap"><div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div></div>
+
+<!-- ══════════════════════════════ -->
+<!-- FILE HANDLING -->
+<!-- ══════════════════════════════ -->
+<div class="layer-label">File handling</div>
+<div class="row">
+  <div class="tooltip-wrap">
+    <div class="node n-teal">
+      <span class="pkg-badge badge-teal">pdfplumber</span><br/>
+      pdfplumber
+      <small>PDF text extraction · page by page · handles multi-page resumes</small>
+    </div>
+    <div class="tooltip">Used in pdf_extractor.py — opens PDF, loops pages, joins all text</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-teal">
+      <span class="pkg-badge badge-teal">python-docx</span><br/>
+      python-docx
+      <small>DOCX read + write · paragraph extraction · final resume output</small>
+    </div>
+    <div class="tooltip">Reads DOCX resumes AND generates the final tailored_resume.docx download</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-teal">
+      <span class="pkg-badge badge-teal">python-dotenv</span><br/>
+      python-dotenv
+      <small>Loads .env file · os.getenv() for API keys</small>
+    </div>
+    <div class="tooltip">load_dotenv() at top of every file reads GROQ_API_KEY etc. from .env</div>
+  </div>
+</div>
+
+<div class="arrow-wrap"><div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div></div>
+
+<!-- ══════════════════════════════ -->
+<!-- WEB SCRAPING -->
+<!-- ══════════════════════════════ -->
+<div class="layer-label">Web scraping — jd_scraper.py</div>
+<div class="row">
+  <div class="tooltip-wrap">
+    <div class="node n-amber">
+      <span class="pkg-badge badge-amber">httpx</span><br/>
+      httpx
+      <small>HTTP requests · async-ready · follows redirects</small>
+    </div>
+    <div class="tooltip">Fallback scraper — works for static job pages. Sends browser-like User-Agent header</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-amber">
+      <span class="pkg-badge badge-amber">beautifulsoup4</span><br/>
+      BeautifulSoup4
+      <small>HTML parsing · strips nav/footer/scripts · clean text</small>
+    </div>
+    <div class="tooltip">Parses raw HTML from httpx, removes junk tags, returns clean readable JD text</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-amber">
+      <span class="pkg-badge badge-amber">firecrawl-py</span><br/>
+      Firecrawl
+      <small>JS-heavy sites · LinkedIn · Greenhouse · Lever</small>
+    </div>
+    <div class="tooltip">Primary scraper — handles JavaScript-rendered pages that httpx can't read. Optional API key</div>
+  </div>
+</div>
+
+<div class="arrow-wrap"><div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div></div>
+
+<!-- ══════════════════════════════ -->
+<!-- ENVIRONMENT -->
+<!-- ══════════════════════════════ -->
+<div class="layer-label">Environment</div>
+<div class="row">
+  <div class="tooltip-wrap">
+    <div class="node n-gray">
+      <span class="pkg-badge badge-gray">python 3.10+</span><br/>
+      Python 3.10+
+      <small>Runtime · TypedDict optional keys · match statements</small>
+    </div>
+    <div class="tooltip">Minimum 3.10 — LangGraph's TypedDict with Optional fields requires it</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-gray">
+      <span class="pkg-badge badge-gray">venv</span><br/>
+      Virtual Environment
+      <small>Isolated packages · no system conflicts · activates with Scripts/activate</small>
+    </div>
+    <div class="tooltip">python -m venv resume → resume\Scripts\activate on Windows</div>
+  </div>
+  <div class="tooltip-wrap">
+    <div class="node n-gray">
+      <span class="pkg-badge badge-gray">.env</span><br/>
+      .env file
+      <small>GROQ_API_KEY · GEMINI_API_KEY · FIRECRAWL_API_KEY</small>
+    </div>
+    <div class="tooltip">Never commit to GitHub. Add to .gitignore. Use .env.example as a template</div>
+  </div>
+</div>
+
+<!-- pip install box -->
+<div class="pip-box">
+  <strong>pip install</strong> streamlit langchain langchain-groq langchain-google-genai langchain-ollama langgraph groq google-generativeai pdfplumber python-docx httpx beautifulsoup4 python-dotenv firecrawl-py
+</div>
+
+<hr/>
+
+<!-- ══════════════════════════════ -->
+<!-- FULL TABLE -->
+<!-- ══════════════════════════════ -->
+<div class="table-wrap">
+  <div class="table-title">Full package reference</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Package</th>
+        <th>Layer</th>
+        <th>Used in</th>
+        <th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>streamlit</td>
+        <td><span class="dot" style="background:#afa9ec"></span>Frontend</td>
+        <td>app1.py — entire UI</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>langgraph</td>
+        <td><span class="dot" style="background:#afa9ec"></span>Orchestration</td>
+        <td>graph/pipeline.py — StateGraph</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>langchain</td>
+        <td><span class="dot" style="background:#afa9ec"></span>Orchestration</td>
+        <td>all agents — LCEL chains</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>langchain-groq</td>
+        <td><span class="dot" style="background:#afa9ec"></span>Orchestration</td>
+        <td>llm_config.py — ChatGroq</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>groq</td>
+        <td><span class="dot" style="background:#f0997b"></span>LLM</td>
+        <td>llm_config.py — primary LLM</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>google-generativeai</td>
+        <td><span class="dot" style="background:#f0997b"></span>LLM</td>
+        <td>llm_config.py — Gemini alt</td>
+        <td><span class="free-badge">Free tier</span></td>
+      </tr>
+      <tr>
+        <td>langchain-google-genai</td>
+        <td><span class="dot" style="background:#f0997b"></span>LLM</td>
+        <td>llm_config.py — Gemini bridge</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>langchain-ollama</td>
+        <td><span class="dot" style="background:#f0997b"></span>LLM</td>
+        <td>llm_config.py — local alt</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>pdfplumber</td>
+        <td><span class="dot" style="background:#5dcaa5"></span>File handling</td>
+        <td>utils/pdf_extractor.py</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>python-docx</td>
+        <td><span class="dot" style="background:#5dcaa5"></span>File handling</td>
+        <td>pdf_extractor.py + resume_generator.py</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>python-dotenv</td>
+        <td><span class="dot" style="background:#5dcaa5"></span>File handling</td>
+        <td>all files — load_dotenv()</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>httpx</td>
+        <td><span class="dot" style="background:#ef9f27"></span>Web scraping</td>
+        <td>utils/jd_scraper.py — fallback</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>beautifulsoup4</td>
+        <td><span class="dot" style="background:#ef9f27"></span>Web scraping</td>
+        <td>utils/jd_scraper.py — HTML parse</td>
+        <td><span class="free-badge">Free</span></td>
+      </tr>
+      <tr>
+        <td>firecrawl-py</td>
+        <td><span class="dot" style="background:#ef9f27"></span>Web scraping</td>
+        <td>utils/jd_scraper.py — primary</td>
+        <td><span class="opt-badge">Optional</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<hr/>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#afa9ec"></div>Orchestration</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0997b"></div>LLM providers</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#5dcaa5"></div>File handling</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef9f27"></div>Web scraping</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d3d1c7"></div>Environment</div>
+</div>
+
+<div class="footer">Resume Builder Agentic System · Workshop Reference Sheet</div>
+
+</div>
+</body>
+</html>

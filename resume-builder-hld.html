@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Builder — High Level Design</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f8f7f4; color: #1a1a1a; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 24px;
+}
+
+.page-title {
+  font-size: 20px; font-weight: 500; margin-bottom: 4px; text-align: center;
+}
+.page-sub {
+  font-size: 13px; color: #888; margin-bottom: 32px; text-align: center;
+}
+
+.diagram {
+  width: 100%; max-width: 780px;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+/* ── Layer label ── */
+.layer-label {
+  font-size: 11px; font-weight: 500; color: #aaa;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  text-align: center; margin: 20px 0 8px;
+}
+.layer-label:first-child { margin-top: 0; }
+
+/* ── Row ── */
+.row { display: flex; gap: 12px; justify-content: center; }
+
+/* ── Nodes ── */
+.node {
+  border-radius: 10px; padding: 10px 18px;
+  font-size: 13px; font-weight: 500; text-align: center;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid transparent; line-height: 1.4;
+  position: relative;
+}
+.node:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+.node small { display: block; font-size: 11px; font-weight: 400; margin-top: 2px; opacity: 0.75; }
+
+/* Node colors */
+.n-gray   { background: #f1efe8; border-color: #d3d1c7; color: #2c2c2a; }
+.n-purple { background: #eeedfe; border-color: #afa9ec; color: #26215c; }
+.n-teal   { background: #e1f5ee; border-color: #5dcaa5; color: #04342c; }
+.n-coral  { background: #faece7; border-color: #f0997b; color: #4a1b0c; }
+.n-amber  { background: #faeeda; border-color: #ef9f27; color: #412402; }
+.n-blue   { background: #e6f1fb; border-color: #85b7eb; color: #042c53; }
+.n-green  { background: #eaf3de; border-color: #97c459; color: #173404; }
+
+/* Wide nodes */
+.node-full { width: 100%; }
+.node-wide { flex: 1; }
+
+/* ── Agent badge pill ── */
+.agent-pill {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px; margin-bottom: 4px; letter-spacing: 0.2px;
+}
+.pill-coral  { background: #993C1D; color: #f5c4b3; }
+.pill-amber  { background: #854F0B; color: #fac775; }
+.pill-blue   { background: #185FA5; color: #b5d4f4; }
+.pill-green  { background: #3B6D11; color: #c0dd97; }
+.pill-purple { background: #4f46e5; color: #d4d2fa; }
+.pill-teal   { background: #0f6e56; color: #9fe1cb; }
+
+/* ── Arrow ── */
+.arrow-wrap { display: flex; justify-content: center; align-items: center; height: 36px; }
+.arrow-wrap.merge { height: 28px; }
+.arrow { width: 1.5px; background: #c9c7be; flex-shrink: 0; }
+.arrow-down {
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #c9c7be;
+}
+.arrow-col { display: flex; flex-direction: column; align-items: center; }
+.arrow-line { width: 1.5px; flex: 1; background: #c9c7be; }
+
+/* Merge arrows (3 → 1) */
+.merge-arrows {
+  display: flex; justify-content: center;
+  align-items: flex-end; height: 36px; gap: 0; position: relative;
+}
+.merge-arrows::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 1.5px; height: 14px; background: #c9c7be;
+}
+
+/* ── Side panels ── */
+.hld-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  gap: 0 12px;
+  width: 100%; max-width: 780px;
+  align-items: start;
+}
+.side-panel {
+  background: #fff; border: 1px dashed #d3d1c7;
+  border-radius: 10px; padding: 14px 10px;
+  font-size: 11px; color: #888; text-align: center;
+  line-height: 1.8; margin-top: 8px;
+}
+.side-panel strong { display: block; font-size: 12px; color: #555; margin-bottom: 4px; }
+.side-panel code { font-family: monospace; font-size: 11px; color: #4f46e5; }
+.side-dashed-lines {
+  display: flex; flex-direction: column; gap: 88px;
+  margin-top: 56px; align-items: flex-end; padding-right: 2px;
+}
+.side-dashed-lines-right {
+  display: flex; flex-direction: column; gap: 88px;
+  margin-top: 56px; align-items: flex-start; padding-left: 2px;
+}
+.side-tick {
+  width: 24px; height: 1px; background: #d3d1c7;
+  border-top: 1px dashed #bbb;
+}
+
+/* ── Tooltip ── */
+.tooltip-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
+.tooltip {
+  visibility: hidden; opacity: 0;
+  background: #1a1a1a; color: #fff; font-size: 11px; font-weight: 400;
+  border-radius: 6px; padding: 5px 10px; white-space: nowrap;
+  position: absolute; top: calc(100% + 6px); z-index: 10;
+  pointer-events: none; transition: opacity 0.15s;
+}
+.tooltip-wrap:hover .tooltip { visibility: visible; opacity: 1; }
+
+/* ── Legend ── */
+.legend {
+  margin-top: 32px; display: flex; flex-wrap: wrap;
+  gap: 10px; justify-content: center; max-width: 780px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #666;
+}
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+</style>
+</head>
+<body>
+
+<div class="page-title">📄 AI Resume Builder — High Level Design</div>
+<div class="page-sub">4-agent agentic pipeline · LangGraph · Groq (Llama 3.1) · Streamlit</div>
+
+<div class="hld-grid">
+
+  <!-- LEFT: LLM panel -->
+  <div>
+    <div class="side-panel" style="margin-top:520px">
+      <strong>LLM layer</strong>
+      <code>llm_config.py</code><br/>
+      Groq · Llama 3.1<br/>
+      ——<br/>
+      Gemini<br/>
+      Claude<br/>
+      Ollama
+    </div>
+  </div>
+
+  <!-- CENTER: Main diagram -->
+  <div class="diagram">
+
+    <!-- INPUTS -->
+    <div class="layer-label">User Inputs</div>
+    <div class="row">
+      <div class="tooltip-wrap">
+        <div class="node n-gray node-wide">
+          Resume file
+          <small>PDF or DOCX</small>
+        </div>
+        <div class="tooltip">Uploaded via st.file_uploader()</div>
+      </div>
+      <div class="tooltip-wrap">
+        <div class="node n-gray node-wide">
+          Target role
+          <small>Text input</small>
+        </div>
+        <div class="tooltip">Used to guide all 4 agents</div>
+      </div>
+      <div class="tooltip-wrap">
+        <div class="node n-gray node-wide">
+          Job description
+          <small>URL or paste</small>
+        </div>
+        <div class="tooltip">Fetched via jd_scraper.py or pasted</div>
+      </div>
+    </div>
+
+    <!-- Arrow: inputs → UI -->
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- STREAMLIT UI -->
+    <div class="layer-label">Streamlit UI</div>
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-purple node-full">
+          <span class="agent-pill pill-purple">app1.py</span><br/>
+          Streamlit UI — 5 tabs
+          <small>Input · JD Analysis · Score Card · Suggestions · Final Resume</small>
+        </div>
+        <div class="tooltip">Run with: streamlit run app1.py</div>
+      </div>
+    </div>
+
+    <!-- Arrow: UI → Utils -->
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- UTILS -->
+    <div class="layer-label">Utility Layer</div>
+    <div class="row">
+      <div class="tooltip-wrap">
+        <div class="node n-teal node-wide">
+          <span class="agent-pill pill-teal">utils/</span><br/>
+          pdf_extractor.py
+          <small>Reads PDF + DOCX text</small>
+        </div>
+        <div class="tooltip">Uses pdfplumber + python-docx</div>
+      </div>
+      <div class="tooltip-wrap">
+        <div class="node n-teal node-wide">
+          <span class="agent-pill pill-teal">utils/</span><br/>
+          jd_scraper.py
+          <small>Firecrawl + httpx fallback</small>
+        </div>
+        <div class="tooltip">Scrapes job pages, falls back to paste</div>
+      </div>
+      <div class="tooltip-wrap">
+        <div class="node n-teal node-wide">
+          <span class="agent-pill pill-teal">utils/</span><br/>
+          resume_generator.py
+          <small>Builds DOCX download</small>
+        </div>
+        <div class="tooltip">Converts final text to .docx bytes</div>
+      </div>
+    </div>
+
+    <!-- Arrow: Utils → State -->
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- LANGGRAPH STATE -->
+    <div class="layer-label">LangGraph Pipeline — graph/pipeline.py</div>
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-purple node-full">
+          <span class="agent-pill pill-purple">ResumeState</span><br/>
+          Shared state — passed between all agents
+          <small>resume_text · jd_text · parsed_jd · evaluation · gap_analysis · final_resume · error</small>
+        </div>
+        <div class="tooltip">TypedDict — grows richer at every agent step</div>
+      </div>
+    </div>
+
+    <!-- Arrow: State → Agent 1 -->
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- AGENT 1 -->
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-coral node-full">
+          <span class="agent-pill pill-coral">Agent 1 — agents/jd_parser.py</span><br/>
+          JD Parser
+          <small>Extracts role, required skills, preferred skills, responsibilities, keywords → parsed_jd dict</small>
+        </div>
+        <div class="tooltip">Input: jd_text → Output: parsed_jd dict</div>
+      </div>
+    </div>
+
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- AGENT 2 -->
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-amber node-full">
+          <span class="agent-pill pill-amber">Agent 2 — agents/resume_evaluator.py</span><br/>
+          Resume Evaluator
+          <small>Scores resume vs JD across 5 dimensions · matched skills · missing skills · verdict → evaluation dict</small>
+        </div>
+        <div class="tooltip">Input: resume_text + parsed_jd → Output: evaluation dict</div>
+      </div>
+    </div>
+
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- AGENT 3 -->
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-blue node-full">
+          <span class="agent-pill pill-blue">Agent 3 — agents/gap_analyst.py</span><br/>
+          Gap Analyst
+          <small>Critical gaps · what company wants · 3 project suggestions · quick wins → gap_analysis dict</small>
+        </div>
+        <div class="tooltip">Input: resume + parsed_jd + evaluation → Output: gap_analysis dict</div>
+      </div>
+    </div>
+
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- AGENT 4 -->
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-green node-full">
+          <span class="agent-pill pill-green">Agent 4 — agents/resume_writer.py</span><br/>
+          Resume Writer
+          <small>Rewrites resume aligned with JD · injects keywords · adds suggested projects → final_resume string</small>
+        </div>
+        <div class="tooltip">Input: all previous outputs → Output: final resume text</div>
+      </div>
+    </div>
+
+    <div class="arrow-wrap">
+      <div class="arrow-col">
+        <div class="arrow-line" style="height:20px"></div>
+        <div class="arrow-down"></div>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="layer-label">Output</div>
+    <div class="row">
+      <div class="tooltip-wrap" style="width:100%">
+        <div class="node n-green node-full">
+          📥 Tailored Resume — DOCX Download
+          <small>Generated by resume_generator.py · served via st.download_button() in Tab 5</small>
+        </div>
+        <div class="tooltip">Final ATS-optimized resume tailored to the job</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: .env panel -->
+  <div>
+    <div class="side-panel" style="margin-top:520px">
+      <strong>.env file</strong>
+      <code>GROQ_API_KEY</code><br/>
+      <code>GEMINI_API_KEY</code><br/>
+      <code>FIRECRAWL_KEY</code><br/>
+      <br/>
+      Never commit<br/>to GitHub
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#d3d1c7"></div> User input</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#afa9ec"></div> Streamlit / LangGraph</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#5dcaa5"></div> Utility modules</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0997b"></div> Agent 1 — JD Parser</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef9f27"></div> Agent 2 — Evaluator</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#85b7eb"></div> Agent 3 — Gap Analyst</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#97c459"></div> Agent 4 — Writer / Output</div>
+</div>
+
+<div style="margin-top:24px;font-size:11px;color:#bbb;text-align:center">
+  AI Resume Builder · LangGraph + Groq + Streamlit · Workshop Project
+</div>
+
+</body>
+</html>

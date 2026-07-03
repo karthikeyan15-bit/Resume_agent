@@ -1,0 +1,6 @@
+resume/
+.env
+__pycache__/
+*.pyc
+final_resume_output.txt
+.vscode/
